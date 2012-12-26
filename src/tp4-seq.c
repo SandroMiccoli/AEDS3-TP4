@@ -13,7 +13,6 @@
 #include <string.h>
 #include "arquivos.h"
 #include "grafos_matriz.h"
-#include "matriz.h"
 
 int main(int argc, char *argv[]){
 
