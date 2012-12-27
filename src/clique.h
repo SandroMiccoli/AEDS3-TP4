@@ -26,15 +26,22 @@ typedef struct conjunto {
     int tam;
 } Conjunto;
 
-void criaConjunto(Conjunto * C, int tam);
+void criaConjuntoVazio(Conjunto * C, int tam);
+
+void criaConjuntoCompleto(Conjunto * C, int tam);
 
 void liberaConjunto(Conjunto * C);
+
+void insereElemento(Conjunto *C, int elemento);
 
 void imprimeConjunto(Conjunto C);
 
 void insereElemento(Conjunto * C, int elemento);
 
 void removeElemento(Conjunto * C, int elemento);
+
+int confereVazio(Conjunto * C);
+
 
 /*
     Funções da Clique e do algortimo Bron-Kerbosch
@@ -43,6 +50,8 @@ void removeElemento(Conjunto * C, int elemento);
 
 int confereClique(Grafo * G);
 
-void BK(Conjunto C, Conjunto P, Conjunto S);
+void insersecaoVizinhos(Conjunto * P, Grafo * G, int vertice);
+
+void BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G);
 
 #endif /* CLIQUE_H_ */
