@@ -24,6 +24,7 @@ int main(int argc, char *argv[]){
         char saida[40] = "saida/";
         int k; // Instâncias de matrizes
 
+        Conjunto C, S, P;
         Grafo G;
 
         strcat(entrada,argv[1]);
@@ -34,19 +35,22 @@ int main(int argc, char *argv[]){
 
         fscanf(inp, "%d ", &k); // Lê as k instâncias de problemas
 
+
         for (int l=0; l<k; l++){
 
-            Conjunto C;
 
             inicializaGrafo(inp, &G);
 
             imprimeGrafo(G);
 
-            criaConjunto(&C,G.N);
-
-            imprimeConjunto(C);
+            criaConjuntoVazio(&C, G.N);
+            criaConjuntoVazio(&S, G.N);
+            criaConjuntoCompleto(&P, G.N);
+            BK(&C, &P, &S, &G);
 
             liberaConjunto(&C);
+            liberaConjunto(&S);
+            liberaConjunto(&P);
 
             freeGrafo(G);
         }

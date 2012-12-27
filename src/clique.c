@@ -22,6 +22,8 @@
 void criaConjuntoVazio(Conjunto * C, int tam){
     C->tam = tam;
 
+    C->qtde = 0;
+
     C->elementos = (int *) malloc (tam * sizeof(int));
 
     for (int i=0; i<tam; i++){
@@ -31,6 +33,8 @@ void criaConjuntoVazio(Conjunto * C, int tam){
 
 void criaConjuntoCompleto(Conjunto * C, int tam){
     C->tam = tam;
+
+    C->qtde = tam;
 
     C->elementos = (int *) malloc (tam * sizeof(int));
 
@@ -45,7 +49,7 @@ void liberaConjunto(Conjunto * C){
 
 void insereElemento(Conjunto *C, int elemento){
 
-    //C->tam++;
+    C->qtde++;
 
     if (elemento < C->tam)
         C->elementos[elemento] = 1;
@@ -54,15 +58,18 @@ void insereElemento(Conjunto *C, int elemento){
 
 void removeElemento(Conjunto *C, int elemento){
 
-    C->tam--;
 
     if (elemento < C->tam)
         C->elementos[elemento] = 0;
 
+    C->qtde--;
+
+    printf("Removeu %d\n",C->qtde);
+
 }
 
 int confereVazio(Conjunto * C){
-    if (C->tam==0) return 0;
+    if (C->qtde==0) return 0;
 
     for (int i=0; i<C->tam; i++){
         if (C->elementos[i] == 1) return 0;
@@ -93,34 +100,36 @@ int confereClique(Grafo * G){
     return 1;
 }
 
-void insersecaoVizinhos(Conjunto * P, Grafo * G, int vertice){
-
+void intersecaoVizinhos(Conjunto * P, Grafo * G, int vertice){
 
     for (int i=0; i < G->N; i++){
         if ((G->matrizAdj.matriz[vertice][i] == 1 && P->elementos[i] == 0) || (G->matrizAdj.matriz[vertice][i] == 0 && P->elementos[i] == 1)){
-            P->elementos[i] = 0;
-            P->tam--;
+            printf("P: "); removeElemento(P, i);
         }
 
     }
-
 }
 
 void BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G){
 
+
     if (confereVazio(P) && confereVazio(S)){
-        printf("Vazio!\n");
+        printf("Maior Clique: %d\n",C->qtde);
+        imprimeConjunto(*C);
+        //return;
     }
 
-    for (int v=0; v<P->tam; v++){
-        insersecaoVizinhos(P, G, v);
-        insersecaoVizinhos(S, G, v);
+    for (int v=0; v<P->tam && P->elementos[v] == 1; v++){
+
+        intersecaoVizinhos(P, G, v);
+        intersecaoVizinhos(S, G, v);
+        //printf("DEBUG!\n");
 
         insereElemento(C,v);
         BK(C,P,S,G);
 
-        removeElemento(P, v);
-        removeElemento(S, v);
+        printf("P: "); removeElemento(P, v);
+        printf("S: "); removeElemento(S, v);
     }
 
 

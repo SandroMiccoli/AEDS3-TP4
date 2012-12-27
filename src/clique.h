@@ -24,6 +24,7 @@
 typedef struct conjunto {
     int * elementos;
     int tam;
+    int qtde;
 } Conjunto;
 
 void criaConjuntoVazio(Conjunto * C, int tam);
@@ -50,7 +51,7 @@ int confereVazio(Conjunto * C);
 
 int confereClique(Grafo * G);
 
-void insersecaoVizinhos(Conjunto * P, Grafo * G, int vertice);
+void intersecaoVizinhos(Conjunto * P, Grafo * G, int vertice);
 
 void BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G);
 
