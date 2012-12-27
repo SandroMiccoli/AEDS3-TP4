@@ -13,6 +13,7 @@
 #include <string.h>
 #include "arquivos.h"
 #include "grafos_matriz.h"
+#include "clique.h"
 
 int main(int argc, char *argv[]){
 
@@ -35,11 +36,17 @@ int main(int argc, char *argv[]){
 
         for (int l=0; l<k; l++){
 
-            inicializaGrafo(inp, &G);
+            Conjunto C;
 
+            inicializaGrafo(inp, &G);
 
             imprimeGrafo(G);
 
+            criaConjunto(&C,G.N);
+
+            imprimeConjunto(C);
+
+            liberaConjunto(&C);
 
             freeGrafo(G);
         }
