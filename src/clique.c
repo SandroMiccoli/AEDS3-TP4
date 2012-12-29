@@ -49,27 +49,37 @@ void liberaConjunto(Conjunto * C){
 
 void insereElemento(Conjunto *C, int elemento){
 
-    C->qtde++;
 
-    if (elemento < C->tam)
-        C->elementos[elemento] = 1;
+    if (elemento < C->tam){
+        if (C->elementos[elemento]==0){
+            C->elementos[elemento] = 1;
+            C->qtde++;
+        }
+    }
+
 
 }
 
 void removeElemento(Conjunto *C, int elemento){
 
+    if (C->qtde>0){
+        if (elemento < C->tam){
+            if (C->elementos[elemento]==1){
+                C->elementos[elemento] = 0;
+                C->qtde--;
+            }
 
-    if (elemento < C->tam)
-        C->elementos[elemento] = 0;
+        }
 
-    C->qtde--;
+    }
 
-    printf("Removeu %d\n",C->qtde);
+   // printf("Removeu %d\n",C->qtde);
+   // imprimeConjunto(*C);
 
 }
 
 int confereVazio(Conjunto * C){
-    if (C->qtde==0) return 0;
+    if (C->qtde==0) return 1;
 
     for (int i=0; i<C->tam; i++){
         if (C->elementos[i] == 1) return 0;
@@ -82,6 +92,12 @@ void imprimeConjunto(Conjunto C){
         printf("%d ",C.elementos[i]);
     }
     printf("\n");
+}
+
+void copiaConjunto(Conjunto * origem, Conjunto * destino){
+    for (int i=0; i<origem->tam; i++){
+        destino->elementos[i] = origem->elementos[i];
+    }
 }
 
 /*
@@ -104,33 +120,46 @@ void intersecaoVizinhos(Conjunto * P, Grafo * G, int vertice){
 
     for (int i=0; i < G->N; i++){
         if ((G->matrizAdj.matriz[vertice][i] == 1 && P->elementos[i] == 0) || (G->matrizAdj.matriz[vertice][i] == 0 && P->elementos[i] == 1)){
-            printf("P: "); removeElemento(P, i);
+            removeElemento(P, i);
         }
-
     }
+
+}
+void uniaoVizinhos(Conjunto * P, Grafo * G, int vertice){
+
+    for (int i=0; i < G->N; i++){
+        if (G->matrizAdj.matriz[vertice][i] == 1){
+            insereElemento(P, i);
+        }
+    }
+
 }
 
 void BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G){
 
+        printf("BK\n");
+        imprimeConjunto(*C);
+        imprimeConjunto(*P);
+        imprimeConjunto(*S);
+
+
 
     if (confereVazio(P) && confereVazio(S)){
         printf("Maior Clique: %d\n",C->qtde);
-        imprimeConjunto(*C);
-        //return;
     }
 
-    for (int v=0; v<P->tam && P->elementos[v] == 1; v++){
-
-        intersecaoVizinhos(P, G, v);
-        intersecaoVizinhos(S, G, v);
-        //printf("DEBUG!\n");
+    for (int v=0; v < P->tam && P->elementos[v] == 1; v++){
 
         insereElemento(C,v);
-        BK(C,P,S,G);
+        intersecaoVizinhos(P, G, v);
+        intersecaoVizinhos(S, G, v);
 
-        printf("P: "); removeElemento(P, v);
-        printf("S: "); removeElemento(S, v);
+        BK(&(*C),&(*P),&(*S),G);
+
+        removeElemento(P, v);
+        removeElemento(S, v);
     }
+
 
 
 }

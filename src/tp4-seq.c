@@ -48,15 +48,16 @@ int main(int argc, char *argv[]){
             criaConjuntoCompleto(&P, G.N);
             BK(&C, &P, &S, &G);
 
-            liberaConjunto(&C);
-            liberaConjunto(&S);
-            liberaConjunto(&P);
 
             freeGrafo(G);
         }
 
         fechaArquivo(inp);
         fechaArquivo(out);
+
+            liberaConjunto(&C);
+            liberaConjunto(&S);
+            liberaConjunto(&P);
 
     }
     else{

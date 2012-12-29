@@ -37,8 +37,6 @@ void insereElemento(Conjunto *C, int elemento);
 
 void imprimeConjunto(Conjunto C);
 
-void insereElemento(Conjunto * C, int elemento);
-
 void removeElemento(Conjunto * C, int elemento);
 
 int confereVazio(Conjunto * C);
@@ -53,6 +51,10 @@ int confereClique(Grafo * G);
 
 void intersecaoVizinhos(Conjunto * P, Grafo * G, int vertice);
 
-void BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G);
+void uniaoVizinhos(Conjunto * P, Grafo * G, int vertice);
+
+void copiaConjunto(Conjunto * origem, Conjunto * destino);
+
+void BK(Conjunto * C, Conjunto * P, Conjunto *S, Grafo * G);
 
 #endif /* CLIQUE_H_ */
