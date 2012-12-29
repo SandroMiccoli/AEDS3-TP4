@@ -1,9 +1,9 @@
 
-%	Documentação do Trabalho Prático 3 de AEDSIII
+%	Documentação do Trabalho Prático 4 de AEDSIII
 %	@Sandro Miccoli
 %
 %	* Você pode identificar erros de grafia através do seguinte comando linux:
-%		aspell --encoding="utf-8" -c -t=tex --lang="pt_BR" tp2.tex
+%		aspell --encoding="utf-8" -c -t=tex --lang="pt_BR" tp4.tex
 %
 
 \documentclass[12pt]{article}
@@ -52,30 +52,62 @@ Este relatório descreve como foi modelado e implementado um problema de alto cu
 
     O trabalho propõe resolver um problema de uma rede social exclusiva para cozinheiros, o Facecook; para isso foi utilizado a teoria dos grafos para modelar o problema. Neste grafo, cada vértice representa um membro da rede, e as arestas representam uma conexão de amizade entre dois membros.
 
-    O que devemos encontrar nessa lista de membros, é o maior grupo de amigos registrados na rede social. Podemos perceber que isso se trata de um problema conhecido na teoria dos grafos, o problema do clique. Esse problema refere-se a qualquer problema que possui como objetivo encontrar sub-grafos completos ("cliques") em um grafo. Como exemplo, o problema de encontrar conjuntos de nós em que todos os elementos estão conectados entre si. \cite{wikiclique}
+    O que devemos encontrar nessa lista de membros, é o maior grupo de amigos registrados na rede social. Podemos perceber que isso se trata de um problema conhecido na teoria dos grafos, o problema da clique. Esse problema refere-se a qualquer problema que possui como objetivo encontrar subgrafos completos ("cliques") em um grafo. Um subgrafo é completo se existir uma aresta para todos os pares de vértices. Como exemplo, o problema de encontrar conjuntos de nós em que todos os elementos estão conectados entre si. \cite{wikiclique}
+
+    Para resolver a questão da clique utilizamos o algorimo Bron-Kerbosch, que é utilizado para encontrar cliques máximos em grafos não direcionados. Iremos detalhar mais sobre seu funcionamento na Seção \ref{solucao_sequencial_proposta}.
 
     Esse problema é \textbf{NP-Completo}, pois não pode ser resolvido de forma ótima para entradas grandes. Ou seja, não existe um algorimo de tempo polinomial para resolver esse problema, e isso que iremos mostrar neste trabalho.
 
     Além disso, para entradas muito grandes o algoritmo sequencial não resolveria em tempo hábil, então foi proposto que construíssimos uma versão paralelizada do algoritmo.
 
-	O restante deste relatório é organizado da seguinte forma. A Seção~\ref{modelagem} descreve como foi feita a modelagem do problema e o armazenamento das conexões do grafo. A Seção \ref{solucao_proposta} descreve as estruturas e como resolvido o problema do clique. A Seção~\ref{implementacao} trata de detalhes específicos da implementação do trabalho: quais os arquivos utilizados; como é feita a compilação e execução; além de detalhar o formato dos arquivos de entrada e saída. A Seção~\ref{avaliacao_experimental} contém a análise de desempenho do problema para entradas triviais e não-triviais. A Seção~\ref{conclusao} conclui o trabalho.
+	O restante deste relatório é organizado da seguinte forma. A Seção~\ref{modelagem} descreve como foi feita a modelagem do problema e o armazenamento das conexões do grafo. A Seção \ref{solucao_sequencial_proposta} descreve as estruturas e como resolvido o problema do clique sequencialmente. A Seção \ref{solucao_paralelizada_proposta} descreve como seria feito a paralelização do problema. A Seção~\ref{implementacao} trata de detalhes específicos da implementação do trabalho: quais os arquivos utilizados; como é feita a compilação e execução; além de detalhar o formato dos arquivos de entrada e saída. A Seção~\ref{avaliacao_experimental} contém a análise de desempenho do problema para entradas triviais e não-triviais. A Seção~\ref{conclusao} conclui o trabalho.
 
 
 \section{MODELAGEM}
 \label{modelagem}
 
-Para simular a memória virtual neste trabalho, foi utilizado um tipo abstrato de dados de lista duplamente encadeada. Foi escolhida esta estrutura pela facilidade de manipulação e pesquisa dos elementos contidos nela.
+    Modelamos o trabalho com grafos implementados utilizando matriz de adjacência, além disso, para trabalhar com o problema da clique, foi necessário implementar um tipo de conjunto, para trabalhar melhor com os nós do grafo.
 
-A abstração da estrutura é a seguinte: a lista representa a memória física e cada uma das suas células representam as páginas que foram carregadas na memória. Assim, utilizando as funções de inserção e remoção da lista encadeada, podemos implementar as políticas de reposição propostas pro trabalho.
+    \begin{lstlisting}[language=c]
 
-\section{SOLUÇÃO PROPOSTA}
-\label{solucao_proposta}
+    typedef struct Matriz{
+        int col, lin;
+        int ** matriz;
+    } Matriz;
 
-É fornecido na entrada do trabalho o tamanho em bytes da memória física, o tamanho de cada página e $N$ acessos à memória. Cada um desses acesso é referente à posição da memória virtual acessada sequencialmente (para mais detalhes sobre o formato de entrada, consultar o item \ref{entrada} deste trabalho). Porém, para saber em qual página cada acesso se encontra, dividimos a posição de acesso pela quantidade de bytes de cada página. Por exemplo, dada a sequência de acesso \textbf{0 2 4 2 10 1 6 8}, podemos simplificar isso para \textbf{0 0 1 0 2 0 1 2}. Assim sabemos qual página deverá estar na memória a cada acesso.
+    typedef struct grafo {
+        Matriz matrizAdj;
+        int N; // Quantidade de vertices no grafo
+    } Grafo;
 
-Na situação descrita acima, chegamos às páginas \textbf{0 0 1 0 2 0 1 2}; porém, com apenas 8 bytes na memória principal, podemos carregar simultaneamente apenas duas páginas, pois cada uma possui 4 bytes de tamanho. Por esse motivo precisamos adotar políticas que removam uma certa página e a troquem por outra da memória principal. Para solucionar esse problema, foi implementado um algoritmo para cada política de reposição (FIFO, LRU e LFU).
+    typedef struct conjunto {
+        int * elementos;
+        int tam;
+        int qtde;
+    } Conjunto;
 
-Para o \textbf{FIFO}, a escolha da página a ser removida é a que entrou primeiro, ou seja, a primeira da fila. No \textbf{LRU}, também removemos as páginas que estão no início da fila, pois toda vez que a página é acessada ela vai pro final da fila, assim, seu início contém as páginas que foram acessadas menos recentemente. No \textbf{LFU}, para cada acesso à memória, cada página possui um contador para indicar a quantidade de acessos à ela. Assim, a cada acesso à memória, ordenamos as páginas de acordo com esse contador, então as primeiras páginas da fila serão as que foram menos frequentemente usadas.
+    \end{lstlisting}
+
+    Essas três estruturas foram necessárias para implementar todo o trabalho. Podemos dizer que a complexidade espacial da estrutura é de $O(n^2)$, sendo $n$ o número de vértices que o grafo tem. A estrutura de conjunto não passa de $O(n)$, pois apenas armazena quais vértices estão contidos ou não nos conjuntos, não necessariamente precisando armazenar as arestas que conectam cada um.
+
+
+\section{SOLUÇÃO SEQUENCIAL PROPOSTA}
+\label{solucao_sequencial_proposta}
+
+Para nossa solução sequencial, utilizamos uma forma básica do \textbf{Bron-Kerbosch}, que se trata de um algoritmo recursivo que utiliza \textit{backtracking} para encontrar todos os cliques máximos de um grafo. A base do algoritmo é a busca exaustiva, mas utiliza-se um conhecimento maior sobre a natureza do problema. Ele gera apenas cliques maximais, evitando assim que cada conjunto gerado tenha que ser comparada com os previamente testados. \cite{bron}
+
+A estratégia de backtracking constrói incrementalmente candidatos para solução do problema, e na medida que determina que não tem possibilidade do candiato fazer parte da solução válida ele o abandona. \cite{wikiback}
+
+A estrutura básica do algoritmo utiliza três conjuntos: um para armazenar os vértices que já foram definidos como parte da clique; outro que armazena os vértices que são candidatos a fazer parte da clique; e o último armazena os vértices que já foram analisados e que não irão fazer parte da clique.
+
+Após o algoritmo fazer os cálculos para cada vértice, no final é possível saber qual o clique maximal do grafo. Esse clique máximo representa o maior grupo de usuários da rede social que são amigos.
+
+No pior caso, o algoritmo apresenta complexidade exponencial de $O(2^n)$, sendo $n$ o número de vértices no grafo.
+
+\section{SOLUÇÃO PARALELIZADA PROPOSTA}
+\label{solucao_paralelizada_proposta}
+
+Aqui será detalhado nossa proposta de solução paralelizada, apesar dela não ter sido implementada.
 
 
 \subsection{Algoritmos implementados}
@@ -83,47 +115,21 @@ Para o \textbf{FIFO}, a escolha da página a ser removida é a que entrou primei
 \vspace{0.2 true cm}
 
 \begin{itemize}
- \item \begin{large}\textit{void FIFO(TipoLista * memoria, TipoCelula pagina)}\end{large}\\
- \subitem \textbf{Descrição:} "First In, First Out"; a página que entrou primeiro na memória é a primeira a ser removida.
- \subitem \textbf{Parâmetros:} Memória principal e página atual que deveria estar na memória
- \subitem \textbf{Complexidade:} $O(n)$, onde $n$ é o número de páginas que cabe na memória.
+ \item \begin{large}\textit{void intersecaoVizinhos(Conjunto * P, Grafo * G, int vertice)}\end{large}\\
+ \subitem \textbf{Descrição:} Função que calcula a interseção entre o conjunto de vértices P para descobrir os vizinhos do vértice em questão.
+ \subitem \textbf{Parâmetros:} Estrutura de conjunto P, estrutura de grafo G e um inteiro representando o vértice.
+ \subitem \textbf{Complexidade:} $O(n)$, onde $n$ é a quantidade de vértices do grafo G.
 \end{itemize}
 
 \vspace{0.2 true cm}
 
 \begin{itemize}
- \item \begin{large}\textit{void LRU(TipoLista * memoria, TipoCelula pagina)}\end{large}\\
- \subitem \textbf{Descrição:} "Least Recently Used"; a página que foi acessada menos recentemente que será a escolha pra ser removida.
- \subitem \textbf{Parâmetros:} Memória principal e página atual que deveria estar na memória
- \subitem \textbf{Complexidade:} $O(n)$, onde $n$ é o número de páginas que cabe na memória.
+ \item \begin{large}\textit{void BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G)}\end{large}\\
+ \subitem \textbf{Descrição:} Função que faz o cálculo do Bron-Kerbosch.
+ \subitem \textbf{Parâmetros:} Três conjuntos C, P e S e um grafo G. Dos três conjuntos, um é utilizado para armazenar os vértices que já foram definidos como parte da clique; outro que armazena os vértices que são candidatos a fazer parte da clique; e o último armazena os vértices que já foram analisados e que não irão fazer parte da clique.
+ \subitem \textbf{Complexidade:} $O(2^n)$, onde $n$ é o número de vértices no grafo.
 \end{itemize}
-
 \vspace{0.2 true cm}
-
-\begin{itemize}
- \item \begin{large}\textit{void LFU(TipoLista * memoria, TipoCelula pagina)}\end{large}\\
- \subitem \textbf{Descrição:} "Least Frequently Used"; a página que é utilizada menos frequentemente que será removida.
- \subitem \textbf{Parâmetros:} Memória principal e página atual que deveria estar na memória
- \subitem \textbf{Complexidade:} $O(n)$, onde $n$ é o número de páginas que cabe na memória.
-\end{itemize}
-
-\vspace{0.2 true cm}
-
-\begin{itemize}
- \item \begin{large}\textit{void removeMenosAcessada(TipoLista * memoria)}\end{large}\\
- \subitem \textbf{Descrição:} Procura pela página com menor número de acessos e a remove da memória.
- \subitem \textbf{Parâmetros:} Memória principal
- \subitem \textbf{Complexidade:} $O(n)$, onde $n$ é o número de páginas que cabe na memória.
-\end{itemize}
-
-\vspace{0.2 true cm}
-
-\begin{itemize}
- \item \begin{large}\textit{TipoApontador resideEmMemoria(TipoLista * memoria, int pagina)}\end{large}\\
- \subitem \textbf{Descrição:} Percorre toda a memória para verificar se a página se encontra na memória. Retorna um apontador pra essa página.
- \subitem \textbf{Parâmetros:} Memória principal e um inteiro que representa a página a ser encontrada
- \subitem \textbf{Complexidade:} $O(n)$, onde $n$ é o número de páginas que cabe na memória.
-\end{itemize}
 
 \subsection{COMPLEXIDADE GERAL}
 \label{complexidades}
@@ -140,17 +146,17 @@ Assim, nosso cálculo de complexidade poderia ser definido como \textit{número 
 \subsubsection{Arquivos .c}
 
 \begin{itemize}
-\item \textbf{tp3.c} Arquivo principal do programa. Lê os arquivos de entrada, calcula os \textit{page faults} pra cada política e escreve o resultado em um arquivo de saída.
-\item \textbf{lista.c} TAD da uma lista duplamente encadeada. Contém funções de manipulação (criação, inserção, remoção e liberação de memória), e também de impressão e cópia.
-\item \textbf{smv.c} Contém a implementação das políticas de reposição FIFO, LRU, LFU.
+\item \textbf{tp4-seq.c} Arquivo principal do programa. Lê os arquivos de entrada, calcula o maior clique de cada instância e escreve resultado em um arquivo de saída.
+\item \textbf{grafos\_matriz.c} Contém todas as funções de manipulação, leitura e escrita de grafos. Utiliza o TAD de matriz como implementação da matriz de adjacências.
+\item \textbf{clique.c} Contém as funções necessárias para o cálculo do clique.
 \item \textbf{arquivos.c} Um tipo abstrato de dados de manipulação de arquivos, contendo funções de abertura, leitura, escrita e fechamento.
 \end{itemize}
 
 \subsubsection{Arquivos .h}
 
 \begin{itemize}
-\item \textbf{lista.h} TAD da uma lista duplamente encadeada. Contém a definição da estrutura e das funções.
-\item \textbf{smv.h} Contém a definição das políticas de reposição FIFO, LRU, LFU.
+\item \textbf{grafos\_matriz.h} Além de definir a estrutura de grafos, contém todas as funções de manipulação, leitura e escrita de grafos. Utiliza o TAD de matriz como implementação da matriz de adjacências.
+\item \textbf{clique.h} Contém as definições das funções necessárias para o cálculo do clique. Além disso, contém a definição da estrutura de conjuntos.
 \item \textbf{arquivos.h} Definição da das funções utilizadas para ler, escrever e fechar corretamente um arquivo.
 \end{itemize}
 
@@ -161,7 +167,7 @@ O programa deve ser compilado através do compilador GCC através dos seguintes 
 Para programação dinâmica:
 \begin{footnotesize}
 \begin{verbatim}
-gcc -Wall -Lsrc src/tp3.c src/lista.c src/arquivos.c src/smv.c -o tp3 \end{verbatim}
+gcc -Wall -Lsrc src/tp4-seq.c src/grafos\_matriz.c src/arquivos.c src/clique.c -o tp4-seq \end{verbatim}
 \end{footnotesize}
 
 Ou através do comando $make$.
@@ -171,36 +177,42 @@ Ou através do comando $make$.
 A execução do programa tem como parâmetros:
 \begin{itemize}
 \item Um arquivo de entrada contendo várias instâncias a serem simuladas.
-\item Um arquivo de saída que irá receber a quantidade de \textit{page faults} pra cada política de reposição
+\item Um arquivo de saída que irá receber a quantidade de nós do maior clique de cada instância.
 \end{itemize}
 
 O comando para a execução do programa é da forma:
 
 \begin{footnotesize}
-\begin{verbatim} ./tp3 <arquivo_de_entrada> <arquivo_de_saída>\end{verbatim}
+\begin{verbatim} ./tp4-seq <arquivo_de_entrada> <arquivo_de_saída>\end{verbatim}
 \end{footnotesize}
 
 
 \subsubsection{Formato da entrada}
 \label{entrada}
 
-A primeira linha do arquivo de entrada contém o valor \textit{k} de instâncias que o arquivo contém. As $k$ instâncias são definidas em duas linhas cada uma. A primeira linha contem três inteiros: o tamanho em bytes da memória física, o tamanho em bytes de cada página, e o número N de acessos. A linha seguinte contém N inteiros representando as N posições da memória virtual acessadas sequencialmente.
+A primeira linha do arquivo de entrada contém o valor \textit{k} de instâncias que o arquivo contém. As $k$ instâncias são definidas da seguinte forma. A primeira linha contém um inteiro $n$ indicando quantos nós (que representa o número de usuários da rede) o grafo possui. As $n$ linhas seguintes contém a matriz de adjacência.
 
 A seguir um arquivo de entrada de exemplo:
 
 \begin{verbatim}
 1
-8 4 10
-0 2 4 2 10 1 0 0 6 8
+7
+0 1 1 0 0 1 0
+1 0 1 1 1 0 0
+1 1 0 1 1 0 0
+0 1 1 0 1 0 0
+0 1 1 1 0 0 1
+1 0 0 0 0 0 1
+0 0 0 0 1 1 0
 \end{verbatim}
 
 \subsubsection{Formato da saída}
 \label{saida}
 
-O arquivo de saída consiste em $k$ linhas, cada uma representando o resultado de uma instância. Cada linha contém um inteiro que representa o número de falhas utilizando FIFO, LRU e LFU, necessariamente nessa ordem. Um exemplo é mostrado abaixo:
+O arquivo de saída consiste em $k$ linhas, cada uma representando o resultado de uma instância. Cada linha contém um inteiro que representa o número de convidados para a festa, ou, em outras palavras, o maior clique encontrado no grafo.
 
 \begin{verbatim}
-6 5 5
+4
 \end{verbatim}
 
 
@@ -223,7 +235,7 @@ Para realizar essas análise foi disponibilizado um arquivo com uma configuraç�
 Nas próximas seções iremos descrever a máquina utilizada para os testes e o resultado de cada item descrito acima.
 
 \subsection{Máquina utilizada}
-\label{maquina}
+\label{maquina}1
 
 Segue especificação da máquina utilizada para os testes:
 \begin{verbatim}
