@@ -23,6 +23,7 @@ int main(int argc, char *argv[]){
         char entrada[40] = "entrada/";
         char saida[40] = "saida/";
         int k; // Instâncias de matrizes
+        int clique;
 
         Conjunto C, S, P;
         Grafo G;
@@ -37,17 +38,15 @@ int main(int argc, char *argv[]){
 
 
         for (int l=0; l<k; l++){
-
-
             inicializaGrafo(inp, &G);
-
-            imprimeGrafo(G);
 
             criaConjuntoVazio(&C, G.N);
             criaConjuntoVazio(&S, G.N);
             criaConjuntoCompleto(&P, G.N);
-            BK(&C, &P, &S, &G);
 
+            clique = BK(&C, &P, &S, &G);
+
+            fprintf(out,"%d\t",clique);
 
             freeGrafo(G);
         }

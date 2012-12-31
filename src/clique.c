@@ -135,16 +135,10 @@ void uniaoVizinhos(Conjunto * P, Grafo * G, int vertice){
 
 }
 
-void BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G){
-
-        printf("BK\n");
-        imprimeConjunto(*C);
-        imprimeConjunto(*P);
-        imprimeConjunto(*S);
-
-
+int BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G){
 
     if (confereVazio(P) && confereVazio(S)){
+        return C->qtde;
         printf("Maior Clique: %d\n",C->qtde);
     }
 
@@ -160,6 +154,5 @@ void BK(Conjunto * C, Conjunto * P, Conjunto * S, Grafo * G){
         removeElemento(S, v);
     }
 
-
-
+    return C->qtde;
 }

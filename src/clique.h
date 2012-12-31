@@ -55,6 +55,6 @@ void uniaoVizinhos(Conjunto * P, Grafo * G, int vertice);
 
 void copiaConjunto(Conjunto * origem, Conjunto * destino);
 
-void BK(Conjunto * C, Conjunto * P, Conjunto *S, Grafo * G);
+int BK(Conjunto * C, Conjunto * P, Conjunto *S, Grafo * G);
 
 #endif /* CLIQUE_H_ */
